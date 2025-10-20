@@ -14,12 +14,12 @@ export default function Home() {
   const [recordings, setRecordings] = useState<Recording[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Load recordings from IndexedDB on mount
+  // Load recordings (presets + user recordings) on mount
   useEffect(() => {
     const loadRecordings = async () => {
       try {
-        const stored = await audioStorage.getRecordings();
-        setRecordings(stored);
+        const allRecordings = await audioStorage.getAllRecordings();
+        setRecordings(allRecordings);
       } catch (error) {
         console.error('Error loading recordings:', error);
       } finally {
@@ -33,32 +33,53 @@ export default function Home() {
   const handleRecordingComplete = useCallback(async (blob: Blob, duration: number) => {
     try {
       // Get current count from state to calculate name without dependency
-      const allRecordings = await audioStorage.getRecordings();
+      const userRecordings = await audioStorage.getRecordings();
       const newRecording: Recording = {
         id: crypto.randomUUID(),
-        name: `Audio ${allRecordings.length + 1}`,
+        name: `Audio ${userRecordings.length + 1}`,
         blob,
         createdAt: new Date(),
         duration,
+        isPreset: false,
       };
 
       await audioStorage.saveRecording(newRecording);
-      setRecordings((prev) => [newRecording, ...prev]);
+
+      // Insert after presets
+      setRecordings((prev) => {
+        const presets = prev.filter((r) => r.isPreset);
+        const userRecs = prev.filter((r) => !r.isPreset);
+        return [...presets, newRecording, ...userRecs];
+      });
     } catch (error) {
       console.error('Error saving recording:', error);
     }
   }, []);
 
   const handleDelete = useCallback(async (id: string) => {
+    // Don't delete presets
+    const recording = recordings.find((r) => r.id === id);
+    if (recording?.isPreset) {
+      console.warn('Cannot delete preset recordings');
+      return;
+    }
+
     try {
       await audioStorage.deleteRecording(id);
       setRecordings((prev) => prev.filter((r) => r.id !== id));
     } catch (error) {
       console.error('Error deleting recording:', error);
     }
-  }, []);
+  }, [recordings]);
 
   const handleRename = useCallback(async (id: string, newName: string) => {
+    // Don't rename presets
+    const recording = recordings.find((r) => r.id === id);
+    if (recording?.isPreset) {
+      console.warn('Cannot rename preset recordings');
+      return;
+    }
+
     try {
       await audioStorage.updateRecording(id, { name: newName });
       setRecordings((prev) =>
@@ -67,7 +88,7 @@ export default function Home() {
     } catch (error) {
       console.error('Error renaming recording:', error);
     }
-  }, []);
+  }, [recordings]);
 
   const handleDownload = useCallback((id: string) => {
     const recording = recordings.find((r) => r.id === id);
@@ -88,7 +109,7 @@ export default function Home() {
       title: '⚠️ Borrar todas las grabaciones',
       children: (
         <Text size="sm">
-          ¿Estás seguro que quieres eliminar TODAS las grabaciones? Esta acción no se puede deshacer.
+          ¿Estás seguro que quieres eliminar todas tus grabaciones? Los sonidos predefinidos no se eliminarán. Esta acción no se puede deshacer.
         </Text>
       ),
       labels: { confirm: 'Borrar todo', cancel: 'Cancelar' },
@@ -96,7 +117,8 @@ export default function Home() {
       onConfirm: async () => {
         try {
           await audioStorage.deleteAllRecordings();
-          setRecordings([]);
+          // Keep only presets
+          setRecordings((prev) => prev.filter((r) => r.isPreset));
         } catch (error) {
           console.error('Error deleting all recordings:', error);
         }
@@ -131,7 +153,7 @@ export default function Home() {
 
         <Divider />
 
-        {recordings.length > 0 && (
+        {recordings.some((r) => !r.isPreset) && (
           <Group justify="center">
             <Button
               variant="light"
@@ -140,7 +162,7 @@ export default function Home() {
               leftSection={<IconTrash size={16} />}
               onClick={handleDeleteAll}
             >
-              Borrar todos los audios
+              Borrar todas mis grabaciones
             </Button>
           </Group>
         )}

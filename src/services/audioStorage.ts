@@ -1,4 +1,5 @@
 import type { Recording } from '@/types/audio';
+import { getPresetRecordings } from '@/config/presetSounds';
 
 const DB_NAME = 'SoundButtonsDB';
 const DB_VERSION = 1;
@@ -149,6 +150,19 @@ class AudioStorageService {
       request.onerror = () => reject(request.error);
       request.onsuccess = () => resolve();
     });
+  }
+
+  /**
+   * Get all recordings including presets and user recordings.
+   * Presets are shown first, followed by user recordings.
+   */
+  async getAllRecordings(): Promise<Recording[]> {
+    const [presets, userRecordings] = await Promise.all([
+      getPresetRecordings(),
+      this.getRecordings(),
+    ]);
+
+    return [...presets, ...userRecordings];
   }
 }
 

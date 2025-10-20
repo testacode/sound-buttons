@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Card, Stack, Group, ActionIcon, Text, TextInput } from '@mantine/core';
+import { Card, Stack, Group, ActionIcon, Text, TextInput, Badge } from '@mantine/core';
 import {
   IconPlayerPlay,
   IconPlayerPause,
@@ -8,6 +8,7 @@ import {
   IconEdit,
   IconCheck,
   IconX,
+  IconStar,
 } from '@tabler/icons-react';
 import type { Recording } from '@/types/audio';
 
@@ -147,22 +148,36 @@ export const SoundButton = ({
             </ActionIcon>
           </Group>
         ) : (
-          <Group justify="space-between" wrap="nowrap">
-            <Text fw={500} size="sm" truncate style={{ flex: 1 }}>
-              {recording.name}
-            </Text>
-            <ActionIcon
-              color="blue"
-              variant="subtle"
-              size="sm"
-              onClick={(e) => {
-                e.stopPropagation();
-                handleEdit();
-              }}
-            >
-              <IconEdit size={16} />
-            </ActionIcon>
-          </Group>
+          <Stack gap="xs">
+            <Group justify="space-between" wrap="nowrap">
+              <Text fw={500} size="sm" truncate style={{ flex: 1 }}>
+                {recording.name}
+              </Text>
+              {!recording.isPreset && (
+                <ActionIcon
+                  color="blue"
+                  variant="subtle"
+                  size="sm"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleEdit();
+                  }}
+                >
+                  <IconEdit size={16} />
+                </ActionIcon>
+              )}
+            </Group>
+            {recording.isPreset && (
+              <Badge
+                size="xs"
+                variant="light"
+                color="violet"
+                leftSection={<IconStar size={12} />}
+              >
+                Predefinido
+              </Badge>
+            )}
+          </Stack>
         )}
 
         <Group justify="space-between" wrap="nowrap">
@@ -182,27 +197,31 @@ export const SoundButton = ({
               {isPlaying ? <IconPlayerPause size={18} /> : <IconPlayerPlay size={18} />}
             </ActionIcon>
 
-            <ActionIcon
-              color="blue"
-              variant="light"
-              onClick={(e) => {
-                e.stopPropagation();
-                onDownload(recording.id);
-              }}
-            >
-              <IconDownload size={18} />
-            </ActionIcon>
+            {!recording.isPreset && (
+              <>
+                <ActionIcon
+                  color="blue"
+                  variant="light"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onDownload(recording.id);
+                  }}
+                >
+                  <IconDownload size={18} />
+                </ActionIcon>
 
-            <ActionIcon
-              color="red"
-              variant="light"
-              onClick={(e) => {
-                e.stopPropagation();
-                onDelete(recording.id);
-              }}
-            >
-              <IconTrash size={18} />
-            </ActionIcon>
+                <ActionIcon
+                  color="red"
+                  variant="light"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onDelete(recording.id);
+                  }}
+                >
+                  <IconTrash size={18} />
+                </ActionIcon>
+              </>
+            )}
           </Group>
         </Group>
       </Stack>

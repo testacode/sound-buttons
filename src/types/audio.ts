@@ -8,6 +8,7 @@ export type Recording = {
   blob: Blob;
   createdAt: Date;
   duration: number; // in seconds
+  isPreset?: boolean; // true for predefined sounds, undefined/false for user recordings
 };
 
 export type RecordingData = {

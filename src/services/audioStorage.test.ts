@@ -90,4 +90,14 @@ describe('AudioStorage Service', () => {
 
     expect(openSpy).toHaveBeenCalledWith('SoundButtonsDB', 1);
   });
+
+  it('should have getAllRecordings method', () => {
+    expect(audioStorage.getAllRecordings).toBeDefined();
+    expect(typeof audioStorage.getAllRecordings).toBe('function');
+  });
+
+  it('should have deleteAllRecordings method', () => {
+    expect(audioStorage.deleteAllRecordings).toBeDefined();
+    expect(typeof audioStorage.deleteAllRecordings).toBe('function');
+  });
 });
