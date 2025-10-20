@@ -2,7 +2,6 @@ import { useState, useRef, useEffect } from 'react';
 import { Card, Stack, Group, ActionIcon, Text, TextInput, Badge } from '@mantine/core';
 import {
   IconPlayerPlay,
-  IconPlayerPause,
   IconTrash,
   IconDownload,
   IconEdit,
@@ -60,13 +59,10 @@ export const SoundButton = ({
       };
     }
 
-    if (isPlaying) {
-      audioRef.current.pause();
-      setIsPlaying(false);
-    } else {
-      audioRef.current.play();
-      setIsPlaying(true);
-    }
+    // Always restart from beginning
+    audioRef.current.currentTime = 0;
+    audioRef.current.play();
+    setIsPlaying(true);
   };
 
   const handleEdit = () => {
@@ -194,7 +190,7 @@ export const SoundButton = ({
                 handlePlayPause();
               }}
             >
-              {isPlaying ? <IconPlayerPause size={18} /> : <IconPlayerPlay size={18} />}
+              <IconPlayerPlay size={18} />
             </ActionIcon>
 
             {!recording.isPreset && (
