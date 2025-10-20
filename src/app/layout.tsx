@@ -10,8 +10,8 @@ import {
 import { ModalsProvider } from '@mantine/modals';
 
 export const metadata = {
-  title: "My Mantine app",
-  description: "I have followed setup instructions carefully",
+  title: "Botonera de Sonidos",
+  description: "Graba audios de hasta 30 segundos y crea tu propia botonera de sonidos con efectos predefinidos",
 };
 
 export default function RootLayout({
@@ -20,7 +20,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" {...mantineHtmlProps}>
+    <html lang="es" {...mantineHtmlProps}>
       <head>
         <ColorSchemeScript defaultColorScheme="auto" />
       </head>
