@@ -113,8 +113,6 @@ export default function Home() {
     );
   }
 
-  const isDevelopment = process.env.NODE_ENV === 'development';
-
   return (
     <Container size="lg" py="xl">
       <Stack gap="xl">
@@ -131,7 +129,7 @@ export default function Home() {
 
         <Divider />
 
-        {isDevelopment && recordings.length > 0 && (
+        {recordings.length > 0 && (
           <Group justify="center">
             <Button
               variant="light"
@@ -140,7 +138,7 @@ export default function Home() {
               leftSection={<IconTrash size={16} />}
               onClick={handleDeleteAll}
             >
-              🔧 DEV: Borrar todos los audios
+              Borrar todos los audios
             </Button>
           </Group>
         )}
