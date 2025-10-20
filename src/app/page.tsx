@@ -6,6 +6,7 @@ import { modals } from '@mantine/modals';
 import { IconTrash } from '@tabler/icons-react';
 import { RecordButton } from '@/components/RecordButton/RecordButton';
 import { SoundGrid } from '@/components/SoundGrid/SoundGrid';
+import { ColorSchemeToggle } from '@/components/ColorSchemeToggle/ColorSchemeToggle';
 import { audioStorage } from '@/services/audioStorage';
 import type { Recording } from '@/types/audio';
 
@@ -115,6 +116,7 @@ export default function Home() {
 
   return (
     <Container size="lg" py="xl">
+      <ColorSchemeToggle />
       <Stack gap="xl">
         <Stack gap="sm" align="center">
           <Title order={1}>Botonera de Sonidos</Title>

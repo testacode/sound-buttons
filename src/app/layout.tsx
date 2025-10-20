@@ -22,10 +22,10 @@ export default function RootLayout({
   return (
     <html lang="en" {...mantineHtmlProps}>
       <head>
-        <ColorSchemeScript />
+        <ColorSchemeScript defaultColorScheme="auto" />
       </head>
       <body>
-        <MantineProvider>
+        <MantineProvider defaultColorScheme="auto">
           <ModalsProvider>{children}</ModalsProvider>
         </MantineProvider>
       </body>
