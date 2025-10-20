@@ -1,7 +1,9 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { Container, Stack, Title, Text, Divider } from '@mantine/core';
+import { Container, Stack, Title, Text, Divider, Button, Group } from '@mantine/core';
+import { modals } from '@mantine/modals';
+import { IconTrash } from '@tabler/icons-react';
 import { RecordButton } from '@/components/RecordButton/RecordButton';
 import { SoundGrid } from '@/components/SoundGrid/SoundGrid';
 import { audioStorage } from '@/services/audioStorage';
@@ -28,21 +30,23 @@ export default function Home() {
   }, []);
 
   const handleRecordingComplete = useCallback(async (blob: Blob, duration: number) => {
-    const newRecording: Recording = {
-      id: crypto.randomUUID(),
-      name: `Audio ${recordings.length + 1}`,
-      blob,
-      createdAt: new Date(),
-      duration,
-    };
-
     try {
+      // Get current count from state to calculate name without dependency
+      const allRecordings = await audioStorage.getRecordings();
+      const newRecording: Recording = {
+        id: crypto.randomUUID(),
+        name: `Audio ${allRecordings.length + 1}`,
+        blob,
+        createdAt: new Date(),
+        duration,
+      };
+
       await audioStorage.saveRecording(newRecording);
       setRecordings((prev) => [newRecording, ...prev]);
     } catch (error) {
       console.error('Error saving recording:', error);
     }
-  }, [recordings.length]);
+  }, []);
 
   const handleDelete = useCallback(async (id: string) => {
     try {
@@ -78,6 +82,27 @@ export default function Home() {
     URL.revokeObjectURL(url);
   }, [recordings]);
 
+  const handleDeleteAll = useCallback(() => {
+    modals.openConfirmModal({
+      title: '⚠️ Borrar todas las grabaciones',
+      children: (
+        <Text size="sm">
+          ¿Estás seguro que quieres eliminar TODAS las grabaciones? Esta acción no se puede deshacer.
+        </Text>
+      ),
+      labels: { confirm: 'Borrar todo', cancel: 'Cancelar' },
+      confirmProps: { color: 'red' },
+      onConfirm: async () => {
+        try {
+          await audioStorage.deleteAllRecordings();
+          setRecordings([]);
+        } catch (error) {
+          console.error('Error deleting all recordings:', error);
+        }
+      },
+    });
+  }, []);
+
   if (isLoading) {
     return (
       <Container size="lg" py="xl">
@@ -87,6 +112,8 @@ export default function Home() {
       </Container>
     );
   }
+
+  const isDevelopment = process.env.NODE_ENV === 'development';
 
   return (
     <Container size="lg" py="xl">
@@ -103,6 +130,20 @@ export default function Home() {
         <RecordButton onRecordingComplete={handleRecordingComplete} />
 
         <Divider />
+
+        {isDevelopment && recordings.length > 0 && (
+          <Group justify="center">
+            <Button
+              variant="light"
+              color="red"
+              size="xs"
+              leftSection={<IconTrash size={16} />}
+              onClick={handleDeleteAll}
+            >
+              🔧 DEV: Borrar todos los audios
+            </Button>
+          </Group>
+        )}
 
         <SoundGrid
           recordings={recordings}

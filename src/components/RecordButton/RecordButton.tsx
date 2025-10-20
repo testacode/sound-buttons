@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { Button, Stack, Text, Group, RingProgress, Alert } from '@mantine/core';
 import { IconMicrophone, IconPlayerStop, IconInfoCircle } from '@tabler/icons-react';
 import { useAudioRecorder } from '@/hooks/useAudioRecorder';
@@ -23,6 +23,7 @@ export const RecordButton = ({ onRecordingComplete }: RecordButtonProps) => {
   } = useAudioRecorder();
 
   const [elapsedTime, setElapsedTime] = useState(0);
+  const processedBlobRef = useRef<Blob | null>(null);
 
   useEffect(() => {
     let interval: NodeJS.Timeout | null = null;
@@ -47,7 +48,9 @@ export const RecordButton = ({ onRecordingComplete }: RecordButtonProps) => {
   }, [isRecording]);
 
   useEffect(() => {
-    if (audioBlob && duration > 0) {
+    // Only process if we have a new blob that hasn't been processed yet
+    if (audioBlob && duration > 0 && audioBlob !== processedBlobRef.current) {
+      processedBlobRef.current = audioBlob;
       onRecordingComplete(audioBlob, duration);
     }
   }, [audioBlob, duration, onRecordingComplete]);
