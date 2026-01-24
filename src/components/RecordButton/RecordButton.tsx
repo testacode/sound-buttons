@@ -24,25 +24,40 @@ export const RecordButton = ({ onRecordingComplete }: RecordButtonProps) => {
 
   const [elapsedTime, setElapsedTime] = useState(0);
   const processedBlobRef = useRef<Blob | null>(null);
+  const startTimeRef = useRef<number>(0);
+  const rafIdRef = useRef<number>(0);
+  const lastUpdateRef = useRef<number>(0);
 
   useEffect(() => {
-    let interval: NodeJS.Timeout | null = null;
-
     if (isRecording) {
+      startTimeRef.current = performance.now();
+      lastUpdateRef.current = 0;
       setElapsedTime(0);
-      interval = setInterval(() => {
-        setElapsedTime((prev) => {
-          const next = prev + 0.1;
-          return next >= MAX_DURATION ? MAX_DURATION : next;
-        });
-      }, 100);
+
+      const updateTimer = (currentTime: number) => {
+        const elapsed = (currentTime - startTimeRef.current) / 1000;
+        const clampedElapsed = Math.min(elapsed, MAX_DURATION);
+
+        // Only update state every ~200ms to reduce re-renders (5 updates/sec vs 10)
+        const roundedElapsed = Math.floor(clampedElapsed * 5) / 5;
+        if (roundedElapsed !== lastUpdateRef.current) {
+          lastUpdateRef.current = roundedElapsed;
+          setElapsedTime(roundedElapsed);
+        }
+
+        if (clampedElapsed < MAX_DURATION) {
+          rafIdRef.current = requestAnimationFrame(updateTimer);
+        }
+      };
+
+      rafIdRef.current = requestAnimationFrame(updateTimer);
     } else {
       setElapsedTime(0);
     }
 
     return () => {
-      if (interval) {
-        clearInterval(interval);
+      if (rafIdRef.current) {
+        cancelAnimationFrame(rafIdRef.current);
       }
     };
   }, [isRecording]);
