@@ -1,4 +1,5 @@
 import type { Recording } from '@/types/audio';
+import { getAudioDuration } from '@/utils/audio';
 
 export type PresetSound = {
   id: string;
@@ -40,9 +41,6 @@ export const PRESET_SOUNDS: PresetSound[] = [
   },
 ];
 
-/**
- * Load a preset sound file and convert it to a Blob with duration
- */
 async function loadPresetBlob(
   fileName: string
 ): Promise<{ blob: Blob; duration: number }> {
@@ -52,26 +50,11 @@ async function loadPresetBlob(
   }
 
   const blob = await response.blob();
-
-  // Get audio duration
-  const audio = new Audio(URL.createObjectURL(blob));
-  const duration = await new Promise<number>((resolve, reject) => {
-    audio.onloadedmetadata = () => {
-      resolve(audio.duration);
-      URL.revokeObjectURL(audio.src);
-    };
-    audio.onerror = () => {
-      reject(new Error(`Failed to load audio metadata for ${fileName}`));
-      URL.revokeObjectURL(audio.src);
-    };
-  });
+  const duration = await getAudioDuration(blob);
 
   return { blob, duration };
 }
 
-/**
- * Convert a preset sound definition to a Recording object
- */
 export async function presetToRecording(preset: PresetSound): Promise<Recording> {
   const { blob, duration } = await loadPresetBlob(preset.fileName);
 
@@ -79,15 +62,12 @@ export async function presetToRecording(preset: PresetSound): Promise<Recording>
     id: preset.id,
     name: preset.name,
     blob,
-    createdAt: new Date(0), // Use epoch time so presets sort first
+    createdAt: new Date(0),
     duration,
     isPreset: true,
   };
 }
 
-/**
- * Get all preset recordings
- */
 export async function getPresetRecordings(): Promise<Recording[]> {
   return Promise.all(PRESET_SOUNDS.map(presetToRecording));
 }

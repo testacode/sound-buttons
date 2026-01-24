@@ -8,19 +8,21 @@ import { RecordButton } from '@/components/RecordButton/RecordButton';
 import { SoundGrid } from '@/components/SoundGrid/SoundGrid';
 import { ColorSchemeToggle } from '@/components/ColorSchemeToggle/ColorSchemeToggle';
 import { audioStorage } from '@/services/audioStorage';
+import { downloadBlob } from '@/utils/download';
+import { showErrorToast } from '@/utils/notifications';
 import type { Recording } from '@/types/audio';
 
 export default function Home() {
   const [recordings, setRecordings] = useState<Recording[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Load recordings (presets + user recordings) on mount
   useEffect(() => {
     const loadRecordings = async () => {
       try {
         const allRecordings = await audioStorage.getAllRecordings();
         setRecordings(allRecordings);
       } catch (error) {
+        showErrorToast('Error al cargar las grabaciones');
         console.error('Error loading recordings:', error);
       } finally {
         setIsLoading(false);
@@ -32,7 +34,6 @@ export default function Home() {
 
   const handleRecordingComplete = useCallback(async (blob: Blob, duration: number) => {
     try {
-      // Get current count from state to calculate name without dependency
       const userRecordings = await audioStorage.getRecordings();
       const newRecording: Recording = {
         id: crypto.randomUUID(),
@@ -45,22 +46,21 @@ export default function Home() {
 
       await audioStorage.saveRecording(newRecording);
 
-      // Insert after presets
       setRecordings((prev) => {
         const presets = prev.filter((r) => r.isPreset);
         const userRecs = prev.filter((r) => !r.isPreset);
         return [...presets, newRecording, ...userRecs];
       });
     } catch (error) {
+      showErrorToast('Error al guardar la grabación');
       console.error('Error saving recording:', error);
     }
   }, []);
 
   const handleDelete = useCallback(async (id: string) => {
-    // Don't delete presets
     const recording = recordings.find((r) => r.id === id);
     if (recording?.isPreset) {
-      console.warn('Cannot delete preset recordings');
+      showErrorToast('No se pueden eliminar los sonidos predefinidos');
       return;
     }
 
@@ -68,15 +68,15 @@ export default function Home() {
       await audioStorage.deleteRecording(id);
       setRecordings((prev) => prev.filter((r) => r.id !== id));
     } catch (error) {
+      showErrorToast('Error al eliminar la grabación');
       console.error('Error deleting recording:', error);
     }
   }, [recordings]);
 
   const handleRename = useCallback(async (id: string, newName: string) => {
-    // Don't rename presets
     const recording = recordings.find((r) => r.id === id);
     if (recording?.isPreset) {
-      console.warn('Cannot rename preset recordings');
+      showErrorToast('No se pueden renombrar los sonidos predefinidos');
       return;
     }
 
@@ -86,6 +86,7 @@ export default function Home() {
         prev.map((r) => (r.id === id ? { ...r, name: newName } : r))
       );
     } catch (error) {
+      showErrorToast('Error al renombrar la grabación');
       console.error('Error renaming recording:', error);
     }
   }, [recordings]);
@@ -94,14 +95,7 @@ export default function Home() {
     const recording = recordings.find((r) => r.id === id);
     if (!recording) return;
 
-    const url = URL.createObjectURL(recording.blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${recording.name}.webm`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    downloadBlob(recording.blob, `${recording.name}.webm`);
   }, [recordings]);
 
   const handleDeleteAll = useCallback(() => {
@@ -117,9 +111,9 @@ export default function Home() {
       onConfirm: async () => {
         try {
           await audioStorage.deleteAllRecordings();
-          // Keep only presets
           setRecordings((prev) => prev.filter((r) => r.isPreset));
         } catch (error) {
+          showErrorToast('Error al eliminar las grabaciones');
           console.error('Error deleting all recordings:', error);
         }
       },

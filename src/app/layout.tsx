@@ -1,6 +1,7 @@
 // Import styles of packages that you've installed.
 // All packages except `@mantine/hooks` require styles imports
 import "@mantine/core/styles.css";
+import "@mantine/notifications/styles.css";
 
 import {
   ColorSchemeScript,
@@ -8,6 +9,7 @@ import {
   mantineHtmlProps,
 } from "@mantine/core";
 import { ModalsProvider } from '@mantine/modals';
+import { Notifications } from '@mantine/notifications';
 
 export const metadata = {
   title: "Botonera de Sonidos",
@@ -26,6 +28,7 @@ export default function RootLayout({
       </head>
       <body>
         <MantineProvider defaultColorScheme="auto">
+          <Notifications />
           <ModalsProvider>{children}</ModalsProvider>
         </MantineProvider>
       </body>

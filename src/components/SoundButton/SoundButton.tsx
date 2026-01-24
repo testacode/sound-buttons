@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState } from 'react';
 import { Card, Stack, Group, ActionIcon, Text, TextInput, Badge } from '@mantine/core';
 import {
   IconPlayerPlay,
@@ -10,6 +10,8 @@ import {
   IconStar,
 } from '@tabler/icons-react';
 import type { Recording } from '@/types/audio';
+import { useAudioPlayback } from '@/hooks/useAudioPlayback';
+import { formatDuration } from '@/utils/time';
 
 type SoundButtonProps = {
   recording: Recording;
@@ -24,46 +26,9 @@ export const SoundButton = ({
   onRename,
   onDownload,
 }: SoundButtonProps) => {
-  const [isPlaying, setIsPlaying] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editedName, setEditedName] = useState(recording.name);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-  const audioUrlRef = useRef<string | null>(null);
-
-  useEffect(() => {
-    // Create audio URL from blob
-    if (recording.blob) {
-      audioUrlRef.current = URL.createObjectURL(recording.blob);
-    }
-
-    return () => {
-      // Cleanup audio URL
-      if (audioUrlRef.current) {
-        URL.revokeObjectURL(audioUrlRef.current);
-      }
-    };
-  }, [recording.blob]);
-
-  const handlePlayPause = () => {
-    if (!audioRef.current) {
-      const audio = new Audio(audioUrlRef.current || undefined);
-      audioRef.current = audio;
-
-      audio.onended = () => {
-        setIsPlaying(false);
-      };
-
-      audio.onerror = () => {
-        setIsPlaying(false);
-        console.error('Error al reproducir audio');
-      };
-    }
-
-    // Always restart from beginning
-    audioRef.current.currentTime = 0;
-    audioRef.current.play();
-    setIsPlaying(true);
-  };
+  const { play, isPlaying } = useAudioPlayback(recording.blob);
 
   const handleEdit = () => {
     setIsEditing(true);
@@ -90,12 +55,6 @@ export const SoundButton = ({
     }
   };
 
-  const formatDuration = (seconds: number): string => {
-    const mins = Math.floor(seconds / 60);
-    const secs = Math.floor(seconds % 60);
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
-  };
-
   return (
     <Card
       shadow="sm"
@@ -107,7 +66,7 @@ export const SoundButton = ({
         backgroundColor: isPlaying ? 'rgba(34, 139, 230, 0.05)' : undefined,
         transition: 'all 0.2s ease',
       }}
-      onClick={!isEditing ? handlePlayPause : undefined}
+      onClick={!isEditing ? play : undefined}
     >
       <Stack gap="sm">
         {isEditing ? (
@@ -187,7 +146,7 @@ export const SoundButton = ({
               variant="light"
               onClick={(e) => {
                 e.stopPropagation();
-                handlePlayPause();
+                play();
               }}
             >
               <IconPlayerPlay size={18} />

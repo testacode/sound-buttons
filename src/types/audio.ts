@@ -1,7 +1,5 @@
 export type RecordingState = 'idle' | 'recording' | 'processing';
 
-export type PlaybackState = 'idle' | 'playing';
-
 export type Recording = {
   id: string;
   name: string;
@@ -9,14 +7,6 @@ export type Recording = {
   createdAt: Date;
   duration: number; // in seconds
   isPreset?: boolean; // true for predefined sounds, undefined/false for user recordings
-};
-
-export type RecordingData = {
-  id: string;
-  name: string;
-  blobUrl: string;
-  createdAt: string; // ISO string for IndexedDB
-  duration: number;
 };
 
 export type WaveformData = {
